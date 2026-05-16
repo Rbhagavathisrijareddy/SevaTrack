@@ -103,7 +103,7 @@ const LoginPage = () => {
                 required 
                 size="md" 
               />
-    <Button fullWidth mt="xl" size="md" type="submit" color="teal" loading={loading} disabled={loading}>
+              <Button fullWidth mt="xl" size="md" type="submit" color="teal" loading={loading} disabled={loading}>
                 {loading ? 'Signing in...' : `Sign In as ${role === 'ngo' ? 'NGO Admin' : 'Field Worker'}`}
               </Button>
             </form>
