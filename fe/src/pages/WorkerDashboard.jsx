@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AppShell, Burger, Group, Text, Box, Avatar, Menu, 
   UnstyledButton, Tabs, Container, Title, Badge 
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { IconLogout, IconFileReport, IconHistory, IconTicket, IconUser } from '@tabler/icons-react';
 import WorkerReportForm from '../components/WorkerReportForm';
 import WorkerSubmissions from '../components/WorkerSubmissions';
@@ -16,7 +16,20 @@ const WorkerDashboard = () => {
   const [opened, { toggle }] = useDisclosure();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('submit');
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    const editParam = searchParams.get('edit');
+    
+    // If edit param is present, switch to submit tab
+    if (editParam) {
+      setActiveTab('submit');
+    } else if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const handleLogout = () => {
     logout();

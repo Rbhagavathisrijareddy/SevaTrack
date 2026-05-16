@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import connectDB from './src/config/db.js';
 import authRoutes from './src/routes/auth.js';
 import userRoutes from './src/routes/users.js';
+import reportsRoutes from './src/routes/reports.js';
+import ticketsRoutes from './src/routes/tickets.js';
+import dashboardRoutes from './src/routes/dashboard.js';
 import { errorHandler } from './src/middleware/errorHandler.js';
 
 // Load environment variables
@@ -34,6 +37,9 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/tickets', ticketsRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {

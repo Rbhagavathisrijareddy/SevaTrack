@@ -5,15 +5,17 @@ import {
 } from '@mantine/core';
 import { 
   IconMessage, IconEye, IconCheck, IconClock, IconAlertCircle, 
-  IconSend, IconThumbUp 
+  IconSend, IconThumbUp, IconEdit 
 } from '@tabler/icons-react';
 import { useData } from '../contexts/DataContext';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { notifications } from '@mantine/notifications';
 import StatusBadge from './StatusBadge';
 
 const WorkerSubmissions = ({ workerId }) => {
   const { data, updateReportStatus, addWorkerAcknowledgment } = useData();
+  const navigate = useNavigate();
   const [expandedRow, setExpandedRow] = useState(null);
   const [acknowledgeModalOpen, setAcknowledgeModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
@@ -98,7 +100,6 @@ const WorkerSubmissions = ({ workerId }) => {
               <Table.Th>Submitted</Table.Th>
               <Table.Th>Status</Table.Th>
               <Table.Th>NGO Response</Table.Th>
-              <Table.Th>Action</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -127,42 +128,37 @@ const WorkerSubmissions = ({ workerId }) => {
                     <StatusBadge status={report.status} size="sm" variant="light" />
                   </Table.Td>
                   <Table.Td>
-                    {report.ngoResponse ? (
-                      <Group gap="xs">
-                        <ThemeIcon color={report.viewedByNGO ? 'teal' : 'gray'} size="sm" radius="xl" variant="light">
-                          <IconMessage size={12} />
-                        </ThemeIcon>
-                        <Text size="xs" c={report.viewedByNGO ? 'teal' : 'dimmed'}>
-                          {report.viewedByNGO ? 'Responded' : 'Awaiting response'}
-                        </Text>
-                      </Group>
-                    ) : (
-                      <Text size="xs" c="dimmed">No response yet</Text>
-                    )}
-                  </Table.Td>
-                  <Table.Td>
-                    {canAcknowledge(report) && (
-                      <Button 
-                        size="xs" 
-                        variant="light" 
-                        color="teal"
-                        leftSection={<IconThumbUp size={14} />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedReport(report);
-                          setAcknowledgeModalOpen(true);
-                        }}
-                      >
-                        Acknowledge
-                      </Button>
-                    )}
-                    {report.status === 'Acknowledged' && (
-                      <Badge color="grape" size="sm" leftSection={<IconCheck size={12} />}>
-                        Acknowledged
-                      </Badge>
-                    )}
+                    <Group gap="xs">
+                      {report.ngoResponse ? (
+                        <Group gap="xs">
+                          <ThemeIcon color={report.viewedByNGO ? 'teal' : 'gray'} size="sm" radius="xl" variant="light">
+                            <IconMessage size={12} />
+                          </ThemeIcon>
+                          <Text size="xs" c={report.viewedByNGO ? 'teal' : 'dimmed'}>
+                            {report.viewedByNGO ? 'Responded' : 'Awaiting response'}
+                          </Text>
+                        </Group>
+                      ) : (
+                        <Text size="xs" c="dimmed">No response yet</Text>
+                      )}
+                      {report.status === 'Pending Review' && (
+                        <Button
+                          size="xs"
+                          variant="subtle"
+                          color="blue"
+                          p={4}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/worker?tab=submit&edit=${report.submissionId}`);
+                          }}
+                        >
+                          <IconEdit size={14} />
+                        </Button>
+                      )}
+                    </Group>
                   </Table.Td>
                 </Table.Tr>
+                
                 
                 {/* Expanded row showing NGO response */}
                 {expandedRow === report.submissionId && (

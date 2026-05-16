@@ -18,6 +18,96 @@ const generateToken = (user) => {
   );
 };
 
+// Unified Login (for both worker and admin)
+export const login = async (req, res) => {
+  try {
+    const { email, password, role } = req.body;
+
+    // Validate input
+    if (!email || !password || !role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email, password, and role are required',
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format',
+      });
+    }
+
+    // Map 'ngo' role to 'admin' for database lookup
+    const dbRole = role === 'ngo' ? 'admin' : role;
+
+    // Find user in database with matching role
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log('Login attempt:', normalizedEmail, 'role:', role, 'dbRole:', dbRole);
+    
+    const user = await User.findOne({ email: normalizedEmail, role: dbRole });
+
+    if (!user) {
+      console.log('User not found:', normalizedEmail, 'role:', dbRole);
+      return res.status(401).json({
+        success: false,
+        message: 'User not found. Please create an account first.',
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    // Verify password
+    console.log('Password check - stored:', user.password, 'provided:', password);
+    if (user.password !== password) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password',
+        code: 'INVALID_CREDENTIALS',
+      });
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate token
+    const token = generateToken(user);
+
+    // Store session
+    const session = new Session({
+      userId: user._id,
+      token,
+      email: user.email,
+      role: user.role,
+    });
+    await session.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          workerId: user.workerId,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error during login',
+      error: error.message,
+    });
+  }
+};
+
 // Field Worker Login (verify against database)
 export const workerLogin = async (req, res) => {
   try {

@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Paper, TextInput, Select, NumberInput, Textarea, Button, Group, Grid, Title, Alert, Stack } from '@mantine/core';
 import { IconUpload, IconCheck } from '@tabler/icons-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { notifications } from '@mantine/notifications';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import WorkerTickets from '../components/WorkerTickets';
 
 const WorkerReportForm = () => {
   const { data, submitReport } = useData();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [submitting, setSubmitting] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const reportId = searchParams.get('edit');
+  const [isEditMode, setIsEditMode] = useState(!!reportId);
+  const [loading, setLoading] = useState(!!reportId);
   const [formData, setFormData] = useState({
     workerName: user?.name || '',
     workerId: user?.workerId || '',
@@ -20,6 +26,48 @@ const WorkerReportForm = () => {
     beneficiaryCount: 0,
     notes: ''
   });
+
+  // Load report data if editing
+  useEffect(() => {
+    if (reportId && token) {
+      fetchReport();
+    }
+  }, [reportId, token]);
+
+  const fetchReport = async () => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/reports/${reportId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch report');
+
+      const result = await response.json();
+      const report = result.data;
+
+      setFormData({
+        workerName: report.workerName,
+        workerId: report.workerId,
+        region: report.region,
+        reliefType: report.reliefType,
+        disasterType: report.disasterType,
+        quantity: report.quantity || 0,
+        beneficiaryCount: report.beneficiaryCount || 0,
+        notes: report.notes || ''
+      });
+    } catch (error) {
+      console.error('Error fetching report:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to load report',
+        color: 'red'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,37 +85,75 @@ const WorkerReportForm = () => {
     setSubmitting(true);
     
     try {
-      const newReport = {
-        ...formData,
-        workerName: user?.name || formData.workerName,
-        workerId: user?.workerId || formData.workerId,
-      };
-      
-      submitReport(newReport);
-      
-      notifications.show({
-        title: 'Success!',
-        message: 'Your report has been submitted to NGO',
-        color: 'green',
-        icon: <IconCheck size={16} />
-      });
-      
-      // Reset form
-      setFormData({
-        workerName: user?.name || '',
-        workerId: user?.workerId || '',
-        region: '',
-        reliefType: '',
-        disasterType: '',
-        quantity: 0,
-        beneficiaryCount: 0,
-        notes: ''
-      });
+      if (isEditMode && reportId) {
+        // Update existing report
+        const response = await fetch(`http://localhost:3000/api/reports/${reportId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            region: formData.region,
+            reliefType: formData.reliefType,
+            disasterType: formData.disasterType,
+            quantity: formData.quantity,
+            beneficiaryCount: formData.beneficiaryCount,
+            notes: formData.notes,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to update report');
+        }
+
+        notifications.show({
+          title: 'Success!',
+          message: 'Your report has been updated',
+          color: 'green',
+          icon: <IconCheck size={16} />
+        });
+
+        // Navigate back to submissions after update
+        setTimeout(() => {
+          navigate('/worker?tab=history');
+        }, 1000);
+      } else {
+        // Create new report
+        const newReport = {
+          ...formData,
+          workerName: user?.name || formData.workerName,
+          workerId: user?.workerId || formData.workerId,
+        };
+        
+        submitReport(newReport);
+        
+        notifications.show({
+          title: 'Success!',
+          message: 'Your report has been submitted to NGO',
+          color: 'green',
+          icon: <IconCheck size={16} />
+        });
+        
+        // Reset form
+        setFormData({
+          workerName: user?.name || '',
+          workerId: user?.workerId || '',
+          region: '',
+          reliefType: '',
+          disasterType: '',
+          quantity: 0,
+          beneficiaryCount: 0,
+          notes: ''
+        });
+      }
       
     } catch (error) {
+      console.error('Error submitting report:', error);
       notifications.show({
         title: 'Error',
-        message: 'Failed to submit report',
+        message: error.message || 'Failed to submit report',
         color: 'red'
       });
     } finally {
@@ -75,9 +161,24 @@ const WorkerReportForm = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <Paper shadow="sm" radius="lg" p="xl" withBorder>
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <p>Loading report...</p>
+        </div>
+      </Paper>
+    );
+  }
+
   return (
     <Paper shadow="sm" radius="lg" p="xl" withBorder>
-      <Title order={3} mb="md">Submit Field Report</Title>
+      <Title order={3} mb="md">{isEditMode ? 'Edit Report' : 'Submit Field Report'}</Title>
+      {isEditMode && (
+        <Alert mb="md" color="blue" title="Edit Mode">
+          You are editing this report. Only reports with "Pending Review" status can be edited.
+        </Alert>
+      )}
       <form onSubmit={handleSubmit}>
         <Grid>
           <Grid.Col span={6}>

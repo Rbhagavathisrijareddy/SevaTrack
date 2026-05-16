@@ -12,57 +12,49 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password, role) => {
     try {
-      const endpoint = role === 'worker' 
-        ? 'http://localhost:3000/api/auth/worker/login'
-        : 'http://localhost:3000/api/auth/admin/google/callback';
+      // Use the same endpoint for both worker and admin, backend will handle role validation
+      const endpoint = 'http://localhost:3000/api/auth/login';
 
-      // For worker login, use email/password
-      if (role === 'worker') {
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password }),
-        });
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, role }),
+      });
 
-        console.log('Login response status:', response.status);
+      console.log('Login response status:', response.status);
 
-        if (response.status === 404) {
-          return { 
-            success: false, 
-            message: 'Backend server not running. Please start the backend.' 
-          };
-        }
-
-        const data = await response.json();
-        console.log('Login response data:', data);
-
-        if (!response.ok) {
-          return { 
-            success: false, 
-            message: data?.message || 'Invalid email or password' 
-          };
-        }
-
-        // Store token and user data
-        localStorage.setItem('token', data.data.token);
-        setToken(data.data.token);
-        setUser(data.data.user);
-        setUserRole('worker');
-        setIsAuthenticated(true);
-
-        return { success: true, message: 'Login successful' };
-      } else {
-        return { success: false, message: 'NGO Admin login requires Google OAuth (coming soon)' };
+      if (response.status === 404) {
+        return { 
+          success: false, 
+          message: 'Backend server not running. Please start the backend.' 
+        };
       }
+
+      const data = await response.json();
+      console.log('Login response data:', data);
+
+      if (!response.ok) {
+        return { 
+          success: false, 
+          message: data?.message || 'Invalid email or password' 
+        };
+      }
+
+      // Store token and user data
+      localStorage.setItem('token', data.data.token);
+      setToken(data.data.token);
+      setUser(data.data.user);
+      setUserRole(role);
+      setIsAuthenticated(true);
+
+      return { success: true, message: 'Login successful' };
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, message: 'Connection error: Backend server not responding' };
+      return { success: false, message: 'Connection error: Backend server not responding' };       
     }
-  };
-
-  const logout = () => {
+  };  const logout = () => {
     setUser(null);
     setUserRole(null);
     setIsAuthenticated(false);
