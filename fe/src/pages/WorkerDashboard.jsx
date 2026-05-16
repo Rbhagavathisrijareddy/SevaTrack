@@ -1,23 +1,16 @@
 import React, { useState } from 'react';
 import { 
-  AppShell, 
-  Burger, 
-  Group, 
-  Text, 
-  Box, 
-  Avatar, 
-  Menu, 
-  UnstyledButton, 
-  Tabs, 
-  Container, 
-  Title 
+  AppShell, Burger, Group, Text, Box, Avatar, Menu, 
+  UnstyledButton, Tabs, Container, Title, Badge 
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { IconLogout, IconFileReport, IconHistory } from '@tabler/icons-react';
+import { IconLogout, IconFileReport, IconHistory, IconTicket, IconUser } from '@tabler/icons-react';
 import WorkerReportForm from '../components/WorkerReportForm';
 import WorkerSubmissions from '../components/WorkerSubmissions';
+import WorkerTickets from '../components/WorkerTickets';
+import WorkerProfile from '../components/WorkerProfile';
 
 const WorkerDashboard = () => {
   const [opened, { toggle }] = useDisclosure();
@@ -52,7 +45,7 @@ const WorkerDashboard = () => {
           </Group>
           <Group>
             <Text size="sm" fw={500}>Welcome, {user?.name}</Text>
-            <Text size="xs" c="dimmed">ID: {user?.workerId}</Text>
+            <Badge variant="light" color="teal" size="sm">ID: {user?.workerId}</Badge>
             <Menu shadow="md" width={200}>
               <Menu.Target>
                 <UnstyledButton>
@@ -61,6 +54,9 @@ const WorkerDashboard = () => {
               </Menu.Target>
               <Menu.Dropdown>
                 <Menu.Label>{user?.name}</Menu.Label>
+                <Menu.Item leftSection={<IconUser size={14} />} onClick={() => setActiveTab('profile')}>
+                  My Profile
+                </Menu.Item>
                 <Menu.Item leftSection={<IconLogout size={14} />} onClick={handleLogout}>Logout</Menu.Item>
               </Menu.Dropdown>
             </Menu>
@@ -73,14 +69,16 @@ const WorkerDashboard = () => {
           <Group justify="space-between" mb="lg">
             <div>
               <Title order={2}>Field Worker Dashboard</Title>
-              <Text c="dimmed" size="sm">Submit disaster reports and track your submissions</Text>
-            </div>
+              <Text c="dimmed" size="sm">Submit disaster reports, track submissions, and manage your profile</Text>
+            </div>     
           </Group>
 
           <Tabs value={activeTab} onChange={setActiveTab} mb="xl">
             <Tabs.List>
-              <Tabs.Tab value="submit" leftSection={<IconFileReport size={16} />}>Submit New Report</Tabs.Tab>
+              <Tabs.Tab value="submit" leftSection={<IconFileReport size={16} />}>Submit Report</Tabs.Tab>
               <Tabs.Tab value="history" leftSection={<IconHistory size={16} />}>My Submissions</Tabs.Tab>
+              <Tabs.Tab value="tickets" leftSection={<IconTicket size={16} />}>My Tickets</Tabs.Tab>
+              <Tabs.Tab value="profile" leftSection={<IconUser size={16} />}>My Profile</Tabs.Tab>
             </Tabs.List>
 
             <Tabs.Panel value="submit" pt="xl">
@@ -89,6 +87,14 @@ const WorkerDashboard = () => {
 
             <Tabs.Panel value="history" pt="xl">
               <WorkerSubmissions workerId={user?.workerId} />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="tickets" pt="xl">
+              <WorkerTickets />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="profile" pt="xl">
+              <WorkerProfile />
             </Tabs.Panel>
           </Tabs>
         </Container>

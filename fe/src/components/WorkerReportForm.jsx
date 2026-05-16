@@ -4,6 +4,7 @@ import { IconUpload, IconCheck } from '@tabler/icons-react';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
 import { notifications } from '@mantine/notifications';
+import WorkerTickets from '../components/WorkerTickets';
 
 const WorkerReportForm = () => {
   const { data, submitReport } = useData();

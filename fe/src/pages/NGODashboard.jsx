@@ -1,40 +1,21 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { 
-  AppShell, 
-  NavLink, 
-  Burger, 
-  Group, 
-  Text, 
-  Box, 
-  Avatar, 
-  Menu, 
-  UnstyledButton, 
-  ScrollArea, 
-  Badge 
+  AppShell, NavLink, Burger, Group, Text, Box, Avatar, 
+  Menu, UnstyledButton, ScrollArea, Badge 
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  IconLayoutDashboard, 
-  IconReportSearch, 
-  IconTicket, 
-  IconLogout 
+  IconLayoutDashboard, IconReportSearch, IconTicket, 
+  IconLogout, IconUser 
 } from '@tabler/icons-react';
 import GlobalSearchBar from '../components/GlobalSearchBar';
 import SearchReportsPage from '../components/SearchReportsPage';
 import DashboardHome from '../components/DashboardHome';
-
-// Nested route components
-const DashboardIndex = () => <DashboardHome />;
-const ReportsIndex = () => <SearchReportsPage />;
-const TicketsIndex = () => (
-  <Box p="xl">
-    <Text size="lg" fw={500} mb="md">Ticket Management</Text>
-    <Text c="dimmed">Ticket system coming soon. Track and manage support tickets from field workers.</Text>
-  </Box>
-);
+import TicketsManagement from '../components/TicketsManagement';
+import NGOProfile from '../components/NGOProfile';
 
 const NGODashboard = () => {
   const [opened, { toggle }] = useDisclosure();
@@ -46,6 +27,7 @@ const NGODashboard = () => {
     { id: 'dashboard', label: 'Dashboard', icon: IconLayoutDashboard, path: '/dashboard' },
     { id: 'searchReports', label: 'Search Reports', icon: IconReportSearch, path: '/dashboard/reports' },
     { id: 'tickets', label: 'Tickets', icon: IconTicket, path: '/dashboard/tickets' },
+    { id: 'profile', label: 'Profile', icon: IconUser, path: '/dashboard/profile' },
   ];
 
   const getActiveTab = () => {
@@ -53,6 +35,7 @@ const NGODashboard = () => {
     if (path === '/dashboard') return 'dashboard';
     if (path === '/dashboard/reports') return 'searchReports';
     if (path === '/dashboard/tickets') return 'tickets';
+    if (path === '/dashboard/profile') return 'profile';
     return 'dashboard';
   };
 
@@ -98,6 +81,12 @@ const NGODashboard = () => {
               <Menu.Dropdown>
                 <Menu.Label>NGO Admin</Menu.Label>
                 <Menu.Item 
+                  leftSection={<IconUser size={14} />} 
+                  onClick={() => navigate('/dashboard/profile')}
+                >
+                  My Profile
+                </Menu.Item>
+                <Menu.Item 
                   leftSection={<IconLogout size={14} />} 
                   onClick={handleLogout}
                 >
@@ -127,9 +116,10 @@ const NGODashboard = () => {
 
       <AppShell.Main>
         <Routes>
-          <Route path="/" element={<DashboardIndex />} />
-          <Route path="/reports" element={<ReportsIndex />} />
-          <Route path="/tickets" element={<TicketsIndex />} />
+          <Route path="/" element={<DashboardHome />} />
+          <Route path="/reports" element={<SearchReportsPage />} />
+          <Route path="/tickets" element={<TicketsManagement />} />
+          <Route path="/profile" element={<NGOProfile />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AppShell.Main>

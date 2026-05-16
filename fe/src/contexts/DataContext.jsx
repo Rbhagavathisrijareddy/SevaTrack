@@ -11,6 +11,7 @@ const generateInitialData = () => {
   const disasterTypes = ["Flood", "Cyclone", "Earthquake", "Landslide", "Drought", "Tsunami", "Urban Flooding", "Heatwave", "Wildfire", "Storm Surge"];
   const statuses = ["Pending Review", "Approved", "Delivered", "Verified", "Rejected"];
   const ticketStatuses = ["Open", "In Progress", "Resolved", "Closed"];
+  const priorities = ["High", "Medium", "Low"];
   const workerNames = ["Aarav Sharma", "Vihaan Gupta", "Ananya Reddy", "Diya Nair", "Kavya Singh", "Ishaan Mehta", "Rohan Patil", "Sanya Joshi", "Aditya Verma", "Neha Kulkarni", "Priya Menon", "Rajesh Khanna"];
   
   const reports = [];
@@ -25,6 +26,7 @@ const generateInitialData = () => {
     const timestamp = new Date(Date.now() - Math.random() * 30 * 24 * 3600000).toISOString();
     const status = statuses[i % statuses.length];
     const ticketStatus = ticketStatuses[i % ticketStatuses.length];
+    const priority = priorities[i % priorities.length];
     const quantity = Math.floor(Math.random() * 800) + 50;
     const beneficiaryCount = Math.floor(Math.random() * 500) + 20;
     
@@ -40,6 +42,14 @@ const generateInitialData = () => {
     ];
     const notes = notesOptions[i % notesOptions.length];
     
+    const ngoResponses = {
+      'Pending Review': 'We have received your report and will review it shortly.',
+      'Approved': '✅ Your report has been approved! Relief materials are being dispatched to the affected area.',
+      'Delivered': '📦 Relief materials have been delivered. Thank you for your coordination!',
+      'Verified': '✓ Field verification completed successfully. Great work!',
+      'Rejected': '❌ Unable to verify this report. Please provide additional details or photos.'
+    };
+    
     reports.push({
       submissionId: `SUB-${2024000 + i}`,
       workerName: worker,
@@ -53,21 +63,41 @@ const generateInitialData = () => {
       status: status,
       disasterType: disasterType,
       ticketStatus: ticketStatus,
+      ngoResponse: ngoResponses[status],
+      ngoResponseDate: status !== 'Pending Review' ? new Date(Date.now() - Math.random() * 7 * 24 * 3600000).toISOString() : null,
+      viewedByNGO: Math.random() > 0.3,
+      viewedAt: Math.random() > 0.3 ? new Date(Date.now() - Math.random() * 5 * 24 * 3600000).toISOString() : null,
+      workerAcknowledgment: null,
+      acknowledgmentDate: null
     });
     
-    tickets.push({
-      ticketId: `TKT-${202400 + i}`,
-      title: `${disasterType} relief support - ${region}`,
-      status: ticketStatus,
-      region: region,
-      workerName: worker,
-      createdAt: timestamp,
-      priority: i % 3 === 0 ? "High" : i % 3 === 1 ? "Medium" : "Low",
-      description: notes
-    });
+    // Create tickets for some reports
+    if (i % 3 === 0) {
+      const ticketTitles = [
+        `Additional resources needed for ${region}`,
+        `Logistics support required for ${reliefType} distribution`,
+        `Security concerns in ${region} during ${disasterType}`,
+        `Medical emergency escalation in ${region}`,
+        `Transportation issues in ${region}`
+      ];
+      
+      tickets.push({
+        ticketId: `TKT-${202400 + i}`,
+        title: ticketTitles[i % ticketTitles.length],
+        description: notes,
+        status: ticketStatus,
+        priority: priority,
+        region: region,
+        workerName: worker,
+        workerId: workerId,
+        createdAt: timestamp,
+        ngoResponse: ticketStatus !== 'Open' ? `We are looking into this issue. Team has been dispatched to ${region}.` : null,
+        responseDate: ticketStatus !== 'Open' ? new Date(Date.now() - Math.random() * 10 * 24 * 3600000).toISOString() : null
+      });
+    }
   }
   
-  return { reports, tickets, regions, reliefTypes, disasterTypes, workerNames, statuses, ticketStatuses };
+  return { reports, tickets, regions, reliefTypes, disasterTypes, workerNames, statuses, ticketStatuses, priorities };
 };
 
 export const DataProvider = ({ children }) => {
@@ -94,7 +124,13 @@ export const DataProvider = ({ children }) => {
       ...newReport,
       timestamp,
       status: 'Pending Review',
-      ticketStatus: 'Open'
+      ticketStatus: 'Open',
+      ngoResponse: 'We have received your report and will review it shortly.',
+      ngoResponseDate: null,
+      viewedByNGO: false,
+      viewedAt: null,
+      workerAcknowledgment: null,
+      acknowledgmentDate: null
     };
     
     setData(prev => ({
@@ -105,16 +141,136 @@ export const DataProvider = ({ children }) => {
     return report;
   };
 
-  // ✅ UPDATE REPORT STATUS - PUT THIS FUNCTION HERE
-  const updateReportStatus = (submissionId, newStatus) => {
+  // Update report status with response
+  const updateReportStatus = (submissionId, newStatus, customResponse = null) => {
+    const responses = {
+      'Pending Review': 'We have received your report and will review it shortly.',
+      'Approved': '✅ Your report has been approved! Relief materials are being dispatched to the affected area.',
+      'Delivered': '📦 Relief materials have been delivered. Thank you for your coordination!',
+      'Verified': '✓ Field verification completed successfully. Great work!',
+      'Rejected': '❌ Unable to verify this report. Please provide additional details or photos.',
+      'In Progress': '🔄 Our team is looking into this report and will take action soon.',
+      'Resolved': '✔️ This issue has been resolved. Thanks for your contribution!'
+    };
+    
+    const response = customResponse || responses[newStatus] || `Status updated to: ${newStatus}`;
+    
     setData(prev => ({
       ...prev,
       reports: prev.reports.map(report => 
         report.submissionId === submissionId 
-          ? { ...report, status: newStatus }
+          ? { 
+              ...report, 
+              status: newStatus,
+              ngoResponse: response,
+              ngoResponseDate: new Date().toISOString()
+            }
           : report
       )
     }));
+  };
+  
+  // Mark report as viewed by NGO
+  const markReportAsViewed = (submissionId) => {
+    setData(prev => ({
+      ...prev,
+      reports: prev.reports.map(report => 
+        report.submissionId === submissionId 
+          ? { 
+              ...report, 
+              viewedByNGO: true,
+              viewedAt: new Date().toISOString()
+            }
+          : report
+      )
+    }));
+  };
+  
+  // Add custom response from NGO
+  const addCustomResponse = (submissionId, responseMessage) => {
+    setData(prev => ({
+      ...prev,
+      reports: prev.reports.map(report => 
+        report.submissionId === submissionId 
+          ? { 
+              ...report, 
+              ngoResponse: responseMessage,
+              ngoResponseDate: new Date().toISOString()
+            }
+          : report
+      )
+    }));
+  };
+
+  // Add worker acknowledgment to report
+  const addWorkerAcknowledgment = (submissionId, acknowledgmentMessage) => {
+    setData(prev => ({
+      ...prev,
+      reports: prev.reports.map(report => 
+        report.submissionId === submissionId 
+          ? { 
+              ...report, 
+              workerAcknowledgment: acknowledgmentMessage,
+              acknowledgmentDate: new Date().toISOString(),
+              status: 'Acknowledged'
+            }
+          : report
+      )
+    }));
+  };
+
+  // Create a new ticket (by field worker)
+  const createTicket = (ticketData) => {
+    const ticketId = `TKT-${Date.now()}`;
+    const newTicket = {
+      ticketId,
+      ...ticketData,
+      status: 'Open',
+      createdAt: new Date().toISOString(),
+      ngoResponse: null,
+      responseDate: null
+    };
+    
+    setData(prev => ({
+      ...prev,
+      tickets: [newTicket, ...prev.tickets]
+    }));
+    
+    return newTicket;
+  };
+
+  // Update ticket status (by NGO)
+  const updateTicketStatus = (ticketId, newStatus) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(ticket =>
+        ticket.ticketId === ticketId
+          ? { ...ticket, status: newStatus }
+          : ticket
+      )
+    }));
+  };
+
+  // Add response to ticket (by NGO)
+  const addTicketResponse = (ticketId, response) => {
+    setData(prev => ({
+      ...prev,
+      tickets: prev.tickets.map(ticket =>
+        ticket.ticketId === ticketId
+          ? { 
+              ...ticket, 
+              ngoResponse: response, 
+              responseDate: new Date().toISOString(),
+              status: ticket.status === 'Open' ? 'In Progress' : ticket.status
+            }
+          : ticket
+      )
+    }));
+  };
+
+  // Get all tickets with filters
+  const getTickets = () => {
+    return data.tickets;
   };
 
   const searchReports = (filters) => {
@@ -129,7 +285,9 @@ export const DataProvider = ({ children }) => {
         r.reliefType.toLowerCase().includes(term) ||
         r.disasterType.toLowerCase().includes(term) ||
         r.notes.toLowerCase().includes(term) ||
-        r.workerId.toLowerCase().includes(term)
+        r.workerId.toLowerCase().includes(term) ||
+        (r.ngoResponse && r.ngoResponse.toLowerCase().includes(term)) ||
+        (r.workerAcknowledgment && r.workerAcknowledgment.toLowerCase().includes(term))
       );
     }
     
@@ -177,14 +335,17 @@ export const DataProvider = ({ children }) => {
       r.region.toLowerCase().includes(term) ||
       r.disasterType.toLowerCase().includes(term) ||
       r.notes.toLowerCase().includes(term) ||
-      r.reliefType.toLowerCase().includes(term)
+      r.reliefType.toLowerCase().includes(term) ||
+      (r.ngoResponse && r.ngoResponse.toLowerCase().includes(term)) ||
+      (r.workerAcknowledgment && r.workerAcknowledgment.toLowerCase().includes(term))
     );
     
     const matchedTickets = data.tickets.filter(t =>
       t.ticketId.toLowerCase().includes(term) ||
       t.title.toLowerCase().includes(term) ||
       t.region.toLowerCase().includes(term) ||
-      t.workerName.toLowerCase().includes(term)
+      t.workerName.toLowerCase().includes(term) ||
+      (t.ngoResponse && t.ngoResponse.toLowerCase().includes(term))
     );
     
     return { reports: matchedReports, tickets: matchedTickets };
@@ -195,15 +356,21 @@ export const DataProvider = ({ children }) => {
     return data.reports.filter(r => r.workerId === workerId);
   };
   
-  // ✅ MAKE SURE updateReportStatus IS INCLUDED IN THE RETURN STATEMENT
   return (
     <DataContext.Provider value={{ 
       data, 
       searchReports, 
       globalSearch, 
       submitReport,
-      updateReportStatus,  // ✅ THIS LINE MUST BE HERE
-      getWorkerReports 
+      updateReportStatus,
+      markReportAsViewed,
+      addCustomResponse,
+      addWorkerAcknowledgment,
+      getWorkerReports,
+      createTicket,
+      updateTicketStatus,
+      addTicketResponse,
+      getTickets
     }}>
       {children}
     </DataContext.Provider>
