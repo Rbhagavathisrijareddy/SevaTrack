@@ -8,20 +8,49 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('worker'); // 'ngo' or 'worker'
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (login(email, password, role)) {
+    setLoading(true);
+    try {
+      const result = await login(email, password, role);
+      console.log('Login result:', result);
+      
+      if (result.success) {
+        notifications.show({ 
+          title: 'Welcome back', 
+          message: `Logged in as ${role === 'ngo' ? 'NGO Admin' : 'Field Worker'}`,
+          color: 'teal',
+          autoClose: 3000
+        });
+        setTimeout(() => {
+          navigate(role === 'ngo' ? '/dashboard' : '/worker');
+        }, 500);
+      } else {
+        console.error('Login failed:', result.message);
+        // Show alert as fallback
+        alert('User not found');
+        notifications.show({ 
+          title: 'Login Failed', 
+          message: 'User not found', 
+          color: 'red',
+          autoClose: 4000
+        });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('An unexpected error occurred: ' + error.message);
       notifications.show({ 
-        title: 'Welcome back', 
-        message: `Logged in as ${role === 'ngo' ? 'NGO Admin' : 'Field Worker'}`,
-        color: 'teal' 
+        title: 'Error', 
+        message: 'An unexpected error occurred', 
+        color: 'red',
+        autoClose: 4000
       });
-      navigate(role === 'ngo' ? '/dashboard' : '/worker');
-    } else {
-      notifications.show({ title: 'Error', message: 'Invalid credentials', color: 'red' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,12 +103,10 @@ const LoginPage = () => {
                 required 
                 size="md" 
               />
-              <Button fullWidth mt="xl" size="md" type="submit" color="teal">
-                Sign In as {role === 'ngo' ? 'NGO Admin' : 'Field Worker'}
+              <Button fullWidth mt="xl" size="md" type="submit" color="teal" loading={loading} disabled={loading}>
+                {loading ? 'Signing in...' : `Sign In as ${role === 'ngo' ? 'NGO Admin' : 'Field Worker'}`}
               </Button>
             </form>
-            <Text c="dimmed" size="xs" ta="center" mt="md">Demo: any email/password works</Text>
-            <Text c="dimmed" size="xs" ta="center" mt="xs">Worker demo: worker@example.com | NGO demo: admin@sevatrack.org</Text>
           </Paper>
         </Container>
       </Center>

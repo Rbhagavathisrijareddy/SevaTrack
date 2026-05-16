@@ -1,0 +1,68 @@
+# Google OAuth Console - Quick Setup Card
+
+## Copy-Paste Ready URLs
+
+### Step 1: Authorized JavaScript Origins
+In Google Cloud Console → Credentials → OAuth 2.0 Client ID → Settings
+
+Add these one by one in the "Authorized JavaScript origins" field:
+
+```
+http://localhost:5173
+http://localhost:3000
+http://127.0.0.1:5173
+http://127.0.0.1:3000
+```
+
+### Step 2: Authorized Redirect URIs
+In the same settings, add these in the "Authorized redirect URIs" field:
+
+```
+http://localhost:5173
+http://localhost:5173/auth/google/callback
+http://localhost:3000/api/auth/admin/google/callback
+```
+
+---
+
+## After Getting Your Client ID
+
+### Update Backend `.env`
+```env
+GOOGLE_CLIENT_ID=<paste_here>
+GOOGLE_CLIENT_SECRET=<paste_here>
+GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
+```
+
+### Update Frontend `.env`
+```env
+VITE_GOOGLE_CLIENT_ID=<paste_here>
+```
+
+---
+
+## Common Mistakes to Avoid ⚠️
+
+❌ **Don't do this:**
+- Forget to add `http://localhost:5000` to Authorized JavaScript origins
+- Use only redirect URIs without JavaScript origins
+- Forget the `/auth/google/callback` part
+- Use `127.0.0.1` without also adding `localhost`
+
+✅ **Do this:**
+- Add BOTH authorized origins AND redirect URIs
+- Include the full path for callback URLs
+- Add all 4 origins (both localhost and 127.0.0.1)
+- Double-check your Client ID is pasted correctly in `.env`
+
+---
+
+## Testing Checklist
+
+- [ ] Backend running on `http://localhost:5000`
+- [ ] Frontend running on `http://localhost:3000`
+- [ ] MongoDB connection working
+- [ ] Google Client ID added to both `.env` files
+- [ ] All URLs added to Google Console
+- [ ] Try field worker login with any email
+- [ ] Try admin login with @sevatrack.org account
