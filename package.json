@@ -1,0 +1,12 @@
+{
+  "name": "sevatrack",
+  "version": "1.0.0",
+  "description": "SevaTrack - Smart Disaster Relief Management",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix fe install && npm --prefix fe run build && npm --prefix be install",
+    "start": "node be/server.js",
+    "dev:be": "npm --prefix be run dev",
+    "dev:fe": "npm --prefix fe run dev"
+  }
+}
