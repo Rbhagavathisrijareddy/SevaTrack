@@ -1,7 +1,6 @@
 import { User } from '../models/UserModel.js';
 import { WorkerProfile } from '../models/WorkerProfileModel.js';
 
-// Create a new user (signup)
 export const createUser = async (req, res) => {
   try {
     const { email, name, password, role } = req.body;

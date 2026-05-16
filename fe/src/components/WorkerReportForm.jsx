@@ -36,7 +36,10 @@ const WorkerReportForm = () => {
 
   const fetchReport = async () => {
     try {
-      const response = await fetch(`/api/reports/${reportId}`, {
+      const apiBaseUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000' 
+        : '';
+      const response = await fetch(`${apiBaseUrl}/api/reports/${reportId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -87,7 +90,10 @@ const WorkerReportForm = () => {
     try {
       if (isEditMode && reportId) {
         // Update existing report
-        const response = await fetch(`/api/reports/${reportId}`, {
+        const apiBaseUrl = window.location.hostname === 'localhost' 
+          ? 'http://localhost:3000' 
+          : '';
+        const response = await fetch(`${apiBaseUrl}/api/reports/${reportId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

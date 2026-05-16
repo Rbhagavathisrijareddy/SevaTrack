@@ -13,8 +13,8 @@ import { verifyToken, verifyAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Public routes
-router.post('/login', login); // Unified login for both worker and admin
+
+router.post('/login', login); 
 router.post('/worker/login', workerLogin);
 router.post('/admin/google/callback', googleCallback);
 router.post('/logout', verifyToken, logout);

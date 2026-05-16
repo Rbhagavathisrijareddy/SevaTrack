@@ -4,7 +4,7 @@ import { User } from '../models/UserModel.js';
 import { WorkerProfile } from '../models/WorkerProfileModel.js';
 import { Session } from '../models/SessionModel.js';
 
-// Generate JWT token
+
 const generateToken = (user) => {
   return jwt.sign(
     {

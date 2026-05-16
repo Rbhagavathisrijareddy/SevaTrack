@@ -71,7 +71,6 @@ const generateInitialData = () => {
       acknowledgmentDate: null
     });
     
-    // Create tickets for some reports
     if (i % 3 === 0) {
       const ticketTitles = [
         `Additional resources needed for ${region}`,

@@ -5,7 +5,7 @@ import LoginPage from '../pages/LoginPage';
 import NGODashboard from '../pages/NGODashboard';
 import WorkerDashboard from '../pages/WorkerDashboard';
 
-// Protected Route Component
+
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { isAuthenticated, userRole } = useAuth();
   
@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   return children;
 };
 
-// Public Route Component
+
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, userRole } = useAuth();
   

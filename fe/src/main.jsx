@@ -3,10 +3,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 
-// CSS imports - remove problematic ones
 import '@mantine/core/styles.css'
-
-// Set document metadata
 document.title = 'SevaTrack | Smart Disaster Relief Management'
 
 const metaDescription = document.createElement('meta')
