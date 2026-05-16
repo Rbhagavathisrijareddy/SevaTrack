@@ -12,8 +12,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password, role) => {
     try {
-      // Use the same endpoint for both worker and admin, backend will handle role validation
-      const endpoint = 'http://localhost:3000/api/auth/login';
+      // Use relative path - works on any domain
+      const endpoint = '/api/auth/login';
 
       const response = await fetch(endpoint, {
         method: 'POST',

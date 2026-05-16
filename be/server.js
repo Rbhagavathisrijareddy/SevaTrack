@@ -2,6 +2,8 @@ import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import connectDB from './src/config/db.js';
 import authRoutes from './src/routes/auth.js';
 import userRoutes from './src/routes/users.js';
@@ -9,6 +11,10 @@ import reportsRoutes from './src/routes/reports.js';
 import ticketsRoutes from './src/routes/tickets.js';
 import dashboardRoutes from './src/routes/dashboard.js';
 import { errorHandler } from './src/middleware/errorHandler.js';
+
+// Get __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Load environment variables
 dotenv.config();
@@ -21,6 +27,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined'));
+
+// Serve static files from frontend build
+const frontendBuildPath = path.join(__dirname, '../fe/dist');
+app.use(express.static(frontendBuildPath));
 
 // Connect to MongoDB
 connectDB();
@@ -42,35 +52,17 @@ app.use('/api/tickets', ticketsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 // Welcome route
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.json({
     message: 'Welcome to SevaTrack API',
     version: '1.0.0',
-    endpoints: {
-      worker_login: 'POST /api/auth/worker/login',
-      admin_google_callback: 'POST /api/auth/admin/google/callback',
-      logout: 'POST /api/auth/logout',
-      current_user: 'GET /api/auth/me',
-      get_workers: 'GET /api/auth/admin/workers (admin only)',
-      create_user: 'POST /api/users (signup)',
-      get_all_users: 'GET /api/users (protected)',
-      get_user: 'GET /api/users/:userId (protected)',
-      update_user: 'PATCH /api/users/:userId (admin only)',
-      delete_user: 'DELETE /api/users/:userId (admin only)',
-    },
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found',
-  });
+// SPA fallback - serve React app for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendBuildPath, 'index.html'));
 });
-
-// Error handling middleware
-app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
